@@ -1,14 +1,13 @@
 apply plugin: 'com.android.library'
-
 android {
-    compileSdkVersion COMPILE_SDK_VERSION as int
-    buildToolsVersion BUILD_TOOLS_VERSION as String
+    compileSdkVersion 23
+    buildToolsVersion '23.0.1'
 
     defaultConfig {
         minSdkVersion 8
-        targetSdkVersion COMPILE_SDK_VERSION as int
-        versionCode VERSION_CODE as int
-        versionName VERSION_NAME as String
+        targetSdkVersion 23
+        versionCode 25
+        versionName '0.3.4'
     }
     buildTypes {
         release {
@@ -30,12 +29,4 @@ android {
 
 dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.4.1'
-}
-
-apply from: 'https://raw.githubusercontent.com/Jacksgong/JCenter/master/license.gradle'
-
-if (isForUpload2Maven()) {
-    println ':library:include upload 2 maven methods'
-    apply from: 'https://raw.githubusercontent.com/Jacksgong/JCenter/master/installv1.gradle'
-    apply from: 'https://raw.githubusercontent.com/Jacksgong/JCenter/master/bintrayv1.gradle'
 }
