@@ -72,7 +72,9 @@ class FileDownloadMessenger implements IFileDownloadMessenger {
             FileDownloadLog.d(this, "notify pending %s", task);
         }
 
-        task.ing();
+        if(task != null) {
+            task.ing();
+        }
 
         process(snapshot);
     }
