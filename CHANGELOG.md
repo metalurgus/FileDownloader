@@ -2,6 +2,125 @@
 
 > [中文迭代日志](https://github.com/lingochamp/FileDownloader/blob/master/CHANGELOG-ZH.md)
 
+## Version 1.2.2
+
+_2016-10-15_
+
+#### Fix
+
+- Fix(fatal-crash): fix when the task doesn't have `FileDownloadListener`, we can't receive the callback of `FileDownloadMonitor.IMonitor#onTaskOver` for it. Closes #348.
+
+## Version 1.2.1
+
+_2016-10-09_
+
+#### Fix
+
+- <s>Fix(fatal-crash): fix when the task doesn't have `FileDownloadListener`, we can't receive the callback of `FileDownloadMonitor.IMonitor#onTaskOver` for it. Closes #348. </s> Sorry for my mistake, this bug is still exist in 1.2.1 and finally fixed in 1.2.2.
+
+## Version 1.2.0
+
+_2016-10-04_
+
+#### New Interfaces
+
+- Add `FileDownloader#insureServiceBind()`: Easy to block the current thread, and start FileDownloader service, after the service started then executes the request which needs the service alive. Refs #324.
+- Add `FileDownloader#insureServiceBindAsync()`: Easy to start FileDownloader service, and after the service started then executes the request which needs the service alive. Refs #324.
+- Add `FileDownloader#bindService(runnable:Runnable)`: Easy to start FileDownloader service, and after the service started then executes the `runnable`. Refs #324.
+- Add `FileDownloader#init(Context,InitCustomMaker)`: Easy to initialize the FileDownloader engine with various kinds of customized components.
+
+#### Enhancement
+
+- Improve Practicability(`InitCustomMaker#database`): Support customize the database component with the implementation of `FileDownloadDatabase`, and implements the default database component: `DefaultDatabaseImpl`.
+- Improve Practicability(`InitCustomMaker#outputStreamCreator`): Support customize the output stream with the implementation of `FileDownloadOutputStream`, and implements the default output stream component `FileDownloadRandomAccessFile`, and some alternative components: `FileDownloadBufferedOutputStream`、`FileDownloadOkio`.
+
+## Version 1.1.5
+
+_2016-09-29_
+
+#### New Interfaces
+
+- Support the configuration `file.non-pre-allocation` in `filedownloader.properties`: Whether doesn't need to pre-allocates the 'content-length' space when to start downloading, default is `false`. Closes #313 .
+
+#### Fix
+
+- Fix(fatal-crash): fix occur the `StackOverflowError` when thread pool getActiveCount is not right because of it just an approximate number. Closes #321 .
+- Fix(minor-crash): fix in some minor cases occur `IllegalStateException` which message is 'No reused downloaded file in this message'. Closes #316 .
+- Fix(minor-crash): fix when there are several serial-queues started in case of the FileDownloader service doesn't connect yet and in minor cases that the same task in the queue will be started twice which lead to crash. Refs #282 .
+
+#### Others
+
+- Dependency: Cancel the dependence of thread-pool library. Refs #321 .
+- MinSDKVersion: Upgrade `minSdkVersion` : 8->9. Refs #321 .
+
+## Version 1.1.0
+
+_2016-09-13_
+
+#### New Interfaces
+
+- Add `BaseDownloadTask#setWifiRequired`: Set whether the task only allows downloading on the wifi network type. Default `false`. Closes #281 .
+
+#### Enhancement
+
+- Improve Performance: Alternate all thread pools to exceed-wait-pool(more detail: docs in `FileDownloadExecutors`) and all threads in pools will be terminate after idle 5 second. Refs #303 .
+- Improve Practicability: Handle any `Throwable`s thrown on `FileDownloadListener#blockComplete` method and callback to `FileDownloadListener#error` method instead of `FileDownloadListener#completed`. Closes #305 .
+
+#### Fix
+
+- Fix(lost-connect): Prevent the waiting-connect-list contains duplicate tasks in minor cases.
+
+## Version 1.0.2
+
+_2016-09-06_
+
+#### Fix
+
+- Fix: When the service didn't connected and now it is connected and FileDownloader try to restart the 'queue-task's which in the waiting-service-connect list but occur an `IllegalStateException`. Closes #307 .
+
+## Version 1.0.1
+
+_2016-09-05_
+
+#### New Interfaces
+
+> If you used `BaseDownloadTask#ready()` which is a deprecated method now, just migrate it to `BaseDownloadTask#asInQueueTask():InQueueTask` and `InQueueTask#enqueue()`.
+
+- Add `BaseDownloadTask#asInQueueTask():InQueueTask` and Deprecated `BaseDownloadTask#ready()`: Declare the task is a queue task, what will be assembled by a queue which makes up of the same `listener` task and there is a method `InQueueTask#enqueue()` to enqueue this task to the global queue to ready for being assembled by the queue. The operation of method `InQueueTask#enqueue()` is the same to the Deprecated method `BaseDownloadTask#ready()`, we wrap the `ready()` method in this way just want you to know clearly: Only if the task belongs to a queue, you need to invoke this method otherwise if this task is an isolated task but you invoke this method, it's wrong and you will receive an exception(More detail reason please move to the exception thrown in `DownloadTask#start`).
+
+#### Fix
+
+- Fix: Maybe occur an IllegalStateException when there are several isolated tasks and queues with the same `listener` object, and they are started in the different thread simultaneously. Closes #282 .
+
+## Version 1.0.0
+
+_2016-08-21_
+
+#### New Interfaces
+
+- Add `BaseDownloadTask#cancel`: This method is used for explaining why the pause operation is the same as the cancel operation.
+
+#### Enhancement
+
+- Improve Performance: Hold the result of `isDownloaderProcess`.
+- Improve Practicability: Refactor the visible layer of the code. Closes #283
+- Improve Practicability: Perfect the java doc. Closes #284
+- Improve Practicability: Add the java doc website: http://fd.dreamtobe.cn. Closes #285
+
+## Version 0.3.5
+
+_2016-08-16_
+
+#### Enhancement
+
+- Improve Practicability: Add thread name to all threads used in FileDownloader.
+- Improve Performance: Change the count of core thread for block-completed-thread-pool: 5->2, reduce redundant resource waste.
+
+#### Fix
+
+- Fix(SQLiteFullException): Cover the case of SQLiteFullException during the entire downloading process, and ensure the exception can be carried back to `FileDownloadListener#error` . Closes #243
+- Fix(directory-case): Fix in the case of the provided path is a directory, and the task already completed, if you start the task again you will receive `FileDownloadListener#completed` directly, but the `targetFilePath` may be null in the `FileDownloadListener#completed` callback method. Closes #237
+
 ## Version 0.3.4
 
 _2016-07-31_

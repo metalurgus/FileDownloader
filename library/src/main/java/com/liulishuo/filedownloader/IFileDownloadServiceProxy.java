@@ -21,8 +21,6 @@ import android.content.Context;
 import com.liulishuo.filedownloader.model.FileDownloadHeader;
 
 /**
- * Created by Jacksgong on 4/17/16.
- * <p/>
  * The interface to access the FileDownloadService.
  */
 public interface IFileDownloadServiceProxy {
@@ -30,7 +28,7 @@ public interface IFileDownloadServiceProxy {
                   final int callbackProgressTimes,
                   final int callbackProgressMinIntervalMillis,
                   final int autoRetryTimes, boolean forceReDownload,
-                  final FileDownloadHeader header);
+                  final FileDownloadHeader header, boolean isWifiRequired);
 
     boolean pause(final int id);
 

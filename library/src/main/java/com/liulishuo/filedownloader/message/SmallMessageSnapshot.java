@@ -21,14 +21,15 @@ import android.os.Parcel;
 import com.liulishuo.filedownloader.model.FileDownloadStatus;
 
 /**
- * Created by Jacksgong on 5/1/16.
- * <p/>
  * A message snapshot for a small file(the length is less than 2G).
+ *
+ * @see LargeMessageSnapshot
+ * @see BlockCompleteMessage
  */
-public class SmallMessageSnapshot extends MessageSnapshot {
+public abstract class SmallMessageSnapshot extends MessageSnapshot {
 
-    SmallMessageSnapshot(int id, byte status) {
-        super(id, status);
+    SmallMessageSnapshot(int id) {
+        super(id);
         isLargeFile = false;
     }
 
@@ -46,12 +47,17 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         return getSmallSofarBytes();
     }
 
+    // Pending Snapshot
     public static class PendingMessageSnapshot extends SmallMessageSnapshot {
 
         private final int sofarBytes, totalBytes;
 
-        PendingMessageSnapshot(int id, byte status, int sofarBytes, int totalBytes) {
-            super(id, status);
+        PendingMessageSnapshot(PendingMessageSnapshot snapshot) {
+            this(snapshot.getId(), snapshot.getSmallSofarBytes(), snapshot.getSmallTotalBytes());
+        }
+
+        PendingMessageSnapshot(int id, int sofarBytes, int totalBytes) {
+            super(id);
             this.sofarBytes = sofarBytes;
             this.totalBytes = totalBytes;
         }
@@ -70,6 +76,11 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
 
         @Override
+        public byte getStatus() {
+            return FileDownloadStatus.pending;
+        }
+
+        @Override
         public int getSmallSofarBytes() {
             return sofarBytes;
         }
@@ -80,15 +91,17 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
     }
 
+
+    // Connected Snapshot
     public static class ConnectedMessageSnapshot extends SmallMessageSnapshot {
         private final boolean resuming;
         private final int totalBytes;
         private final String etag;
         private final String fileName;
 
-        ConnectedMessageSnapshot(int id, byte status, boolean resuming, int totalBytes,
+        ConnectedMessageSnapshot(int id, boolean resuming, int totalBytes,
                                  String etag, String fileName) {
-            super(id, status);
+            super(id);
             this.resuming = resuming;
             this.totalBytes = totalBytes;
             this.etag = etag;
@@ -123,6 +136,11 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
 
         @Override
+        public byte getStatus() {
+            return FileDownloadStatus.connected;
+        }
+
+        @Override
         public boolean isResuming() {
             return resuming;
         }
@@ -138,12 +156,18 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
     }
 
+    // Progress Snapshot
     public static class ProgressMessageSnapshot extends SmallMessageSnapshot {
         private final int sofarBytes;
 
-        ProgressMessageSnapshot(int id, byte status, int sofarBytes) {
-            super(id, status);
+        ProgressMessageSnapshot(int id, int sofarBytes) {
+            super(id);
             this.sofarBytes = sofarBytes;
+        }
+
+        @Override
+        public byte getStatus() {
+            return FileDownloadStatus.progress;
         }
 
         @Override
@@ -168,12 +192,13 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
     }
 
+    // Completed Snapshot
     public static class CompletedFlowDirectlySnapshot extends CompletedSnapshot implements
             IFlowDirectly {
 
-        CompletedFlowDirectlySnapshot(int id, byte status, boolean reusedDownloadedFile,
+        CompletedFlowDirectlySnapshot(int id, boolean reusedDownloadedFile,
                                       int totalBytes) {
-            super(id, status, reusedDownloadedFile, totalBytes);
+            super(id, reusedDownloadedFile, totalBytes);
         }
 
         CompletedFlowDirectlySnapshot(Parcel in) {
@@ -185,9 +210,9 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         private final boolean reusedDownloadedFile;
         private final int totalBytes;
 
-        CompletedSnapshot(int id, byte status, boolean reusedDownloadedFile,
+        CompletedSnapshot(int id, boolean reusedDownloadedFile,
                           int totalBytes) {
-            super(id, status);
+            super(id);
             this.reusedDownloadedFile = reusedDownloadedFile;
             this.totalBytes = totalBytes;
         }
@@ -211,6 +236,11 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
 
         @Override
+        public byte getStatus() {
+            return FileDownloadStatus.completed;
+        }
+
+        @Override
         public int getSmallTotalBytes() {
             return totalBytes;
         }
@@ -221,12 +251,13 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
     }
 
+    // Error Snapshot
     public static class ErrorMessageSnapshot extends SmallMessageSnapshot {
         private final int sofarBytes;
         private final Throwable throwable;
 
-        ErrorMessageSnapshot(int id, byte status, int sofarBytes, Throwable throwable) {
-            super(id, status);
+        ErrorMessageSnapshot(int id, int sofarBytes, Throwable throwable) {
+            super(id);
             this.sofarBytes = sofarBytes;
             this.throwable = throwable;
         }
@@ -234,6 +265,11 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         @Override
         public int getSmallSofarBytes() {
             return sofarBytes;
+        }
+
+        @Override
+        public byte getStatus() {
+            return FileDownloadStatus.error;
         }
 
         @Override
@@ -260,12 +296,13 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
     }
 
+    // Retry Snapshot
     public static class RetryMessageSnapshot extends ErrorMessageSnapshot {
         private final int retryingTimes;
 
-        RetryMessageSnapshot(int id, byte status, int sofarBytes, Throwable throwable,
+        RetryMessageSnapshot(int id, int sofarBytes, Throwable throwable,
                              int retryingTimes) {
-            super(id, status, sofarBytes, throwable);
+            super(id, sofarBytes, throwable);
             this.retryingTimes = retryingTimes;
         }
 
@@ -289,12 +326,19 @@ public class SmallMessageSnapshot extends MessageSnapshot {
             super(in);
             this.retryingTimes = in.readInt();
         }
+
+        @Override
+        public byte getStatus() {
+            return FileDownloadStatus.retry;
+        }
     }
 
+
+    // Warn Snapshot
     public static class WarnFlowDirectlySnapshot extends WarnMessageSnapshot implements
             IFlowDirectly {
-        WarnFlowDirectlySnapshot(int id, byte status, int sofarBytes, int totalBytes) {
-            super(id, status, sofarBytes, totalBytes);
+        WarnFlowDirectlySnapshot(int id, int sofarBytes, int totalBytes) {
+            super(id, sofarBytes, totalBytes);
         }
 
         WarnFlowDirectlySnapshot(Parcel in) {
@@ -305,8 +349,8 @@ public class SmallMessageSnapshot extends MessageSnapshot {
     public static class WarnMessageSnapshot extends PendingMessageSnapshot implements
             IWarnMessageSnapshot {
 
-        WarnMessageSnapshot(int id, byte status, int sofarBytes, int totalBytes) {
-            super(id, status, sofarBytes, totalBytes);
+        WarnMessageSnapshot(int id, int sofarBytes, int totalBytes) {
+            super(id, sofarBytes, totalBytes);
         }
 
         WarnMessageSnapshot(Parcel in) {
@@ -314,14 +358,25 @@ public class SmallMessageSnapshot extends MessageSnapshot {
         }
 
         @Override
-        public void turnToPending() {
-            this.status = FileDownloadStatus.pending;
+        public MessageSnapshot turnToPending() {
+            return new SmallMessageSnapshot.PendingMessageSnapshot(this);
+        }
+
+        @Override
+        public byte getStatus() {
+            return FileDownloadStatus.warn;
         }
     }
 
+    // Paused Snapshot
     public static class PausedSnapshot extends PendingMessageSnapshot {
-        PausedSnapshot(int id, byte status, int sofarBytes, int totalBytes) {
-            super(id, status, sofarBytes, totalBytes);
+        PausedSnapshot(int id, int sofarBytes, int totalBytes) {
+            super(id, sofarBytes, totalBytes);
+        }
+
+        @Override
+        public byte getStatus() {
+            return FileDownloadStatus.paused;
         }
     }
 }

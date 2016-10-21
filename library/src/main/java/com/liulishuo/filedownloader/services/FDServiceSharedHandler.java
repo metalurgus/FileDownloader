@@ -27,8 +27,6 @@ import com.liulishuo.filedownloader.model.FileDownloadHeader;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by Jacksgong on 4/17/16.
- * <p/>
  * For handling the case of the FileDownloadService runs in shared the main process.
  */
 public class FDServiceSharedHandler extends IFileDownloadIPCService.Stub
@@ -57,9 +55,10 @@ public class FDServiceSharedHandler extends IFileDownloadIPCService.Stub
     @Override
     public void start(String url, String path, boolean pathAsDirectory, int callbackProgressTimes,
                       int callbackProgressMinIntervalMillis, int autoRetryTimes, boolean forceReDownload,
-                      FileDownloadHeader header) {
+                      FileDownloadHeader header, boolean isWifiRequired) {
         downloadManager.start(url, path, pathAsDirectory, callbackProgressTimes,
-                callbackProgressMinIntervalMillis, autoRetryTimes, forceReDownload, header);
+                callbackProgressMinIntervalMillis, autoRetryTimes, forceReDownload, header,
+                isWifiRequired);
     }
 
     @Override

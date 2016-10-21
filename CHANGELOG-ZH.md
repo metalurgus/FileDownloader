@@ -2,6 +2,125 @@
 
 > [ Change log in english](https://github.com/lingochamp/FileDownloader/blob/master/CHANGELOG.md)
 
+## Version 1.2.2
+
+_2016-10-15_
+
+#### 修复
+
+- 修复(fatal-crash): 修复当任务没有`FileDownloadListener`时，也不能收到该任务`FileDownloadMonitor.IMonitor#onTaskOver`的回调的问题。 Closes #348.
+
+## Version 1.2.1
+
+_2016-10-09_
+
+#### 修复
+
+- <s>修复(fatal-crash): 修复当任务没有`FileDownloadListener`时，也不能收到该任务`FileDownloadMonitor.IMonitor#onTaskOver`的回调的问题。 Closes #348.</s> 十分的抱歉这个问题在1.2.1版本中依然存在，最终在1.2.2中验证修复。
+
+## Version 1.2.0
+
+_2016-10-04_
+
+#### 新接口
+
+- 新增 `FileDownloader#insureServiceBind()`: 便于阻塞当前线程，并且启动下载服务，服务启动之后再执行需要服务的请求。 Refs #324.
+- 新增 `FileDownloader#insureServiceBindAsync()`: 便于启动下载服务，并且在服务启动之后，执行需要下载服务的请求。 Refs #324.
+- 新增 `FileDownloader#bindService(runnable:Runnable)`: 便于启动下载服务，并且在服务启动之后，执行 `runnable`。 Refs #324.
+- 新增 `FileDownloader#init(Context,InitCustomMaker)`: 便于初始化下载引擎的时候可以传入更多的定制化组件。 Refs #157.
+
+#### Enhancement
+
+- 提高实用性(`InitCustomMaker#database`): 支持定制化数据库组件(`FileDownloadDatabase`)，并且实现默认的数据库组件： `DefaultDatabaseImpl`。 Closes #157.
+- 提高实用性(`InitCustomMaker#outputStreamCreator`): 支持定制化输出流组件(`FileDownloadOutputStream`)，并且实现默认的输出流组件： `FileDownloadRandomAccessFile`，与一些可替代的组件： `FileDownloadBufferedOutputStream`、`FileDownloadOkio`。Closes #301.
+
+## Version 1.1.5
+
+_2016-09-29_
+
+#### 新接口
+
+- 支持在`filedownloader.properties`中配置`file.non-pre-allocation`: 是否不需要在开始下载的时候，预申请整个文件的大小(`content-length`), 默认值是`false`。Closes #313 .
+
+#### 修复
+
+- 修复(fatal-crash): 修复由于`ThreadPoolExecutor#getActiveCount()`是一个大概的值，导致在其反回的不是正确值时，thread-pool库中存在`StackOverflowError`Crash的问题。Closes #321 .
+- 修复(minor-crash): 修复在一些小概率情况下出现Crash Message是'No reused downloaded file in this message'的IllegalStateException的问题。 Closes #316 .
+- 修复(minor-crash): 修复当在下载服务还没有连接上时，同时有几个串行队列任务需要执行，在一些小概率的情况下，一些相同的任务会被启动两次导致crash的问题。 Refs #282 .
+
+#### 其他
+
+- 依赖: 取消对thread-pool库的依赖。 Refs #321 .
+- MinSDKVersion: 升级`minSdkVersion` : 8->9。 Refs #321 .
+
+## Version 1.1.0
+
+_2016-09-13_
+
+#### 新接口
+
+- 新增 `BaseDownloadTask#setWifiRequired`: 设置任务是否只允许在Wifi网络环境下进行下载。 默认值 `false`。 Closes #281 .
+
+#### 性能与提高
+
+- 提高性能: 替换所有的线程池为exceed-wait-pool(更多详情参见: `FileDownloadExecutors`) 并且所有线程池中的线程将会在闲置五秒后自动结束。 Refs #303 .
+- 提高实用性: 当有异常从`FileDownloadListener#blockComplete`抛出时，将会被`catch`并且回调到`FileDownloadListener#error`中而非回调`FileDownloadListener#completed`。 Closes #305 .
+
+#### 修复
+
+- 修复(lost-connect): 避免等待服务连接的列表中在一些小概率情况下存在重复任务的问题。
+
+## Version 1.0.2
+
+_2016-09-06_
+
+#### 修复
+
+- 修复: 服务还没有连接上时，启动的'队列任务'被放在等待队列，当服务连接上以后，FileDownloader尝试重启这些等待队列中的任务，但是抛了`IllegalStateException`的Bug。 Closes #307 .
+
+## Version 1.0.1
+
+_2016-09-05_
+
+#### 新接口
+
+> 如果你之前有使用现在已经被申明弃用的方法`BaseDownloadTask#ready()`, 只需要简单的将它迁移为:`BaseDownloadTask#asInQueueTask():InQueueTask`并且调用`InQueueTask#enqueue()`。
+
+- 添加`BaseDownloadTask#asInQueueTask():InQueueTask`并申明弃用`BaseDownloadTask#ready()`: 申明当前任务是队列任务，并且可以通过`InQueueTask#enqueue()`将当前任务放入全局队列以便于启动队列任务的时候，能被队列收编执行。`InQueueTask#enqueue()`中的操作与`BaseDownloadTask#ready()`相同, 我们通过这个方式封装`ready()`是为了让你更加清晰的了解: 只有当前任务是队列任务，才需要调用该方法；如果当前任务不是队列任务，而却调用了这个方法，你将会收到一个异常(具体异常的原因可以移步到`DownloadTask#start`报的异常信息进行了解)。
+
+#### 修复
+
+- 修复: 当有使用相同`listener`对象的多个孤立任务与队列任务在不同的线程中同时被启动时(后)，有可能会遇到IllegalStateException异常的问题。 Closes #282 .
+
+## Version 1.0.0
+
+_2016-08-21_
+
+#### 新接口
+
+- 添加 `BaseDownloadTask#cancel`: 这个方法是为了说明为什么`pause`的操作也可以达到`cancel`的作用。
+
+#### 性能与提高
+
+- 提高性能: 持有`isDownloaderProcess`的结果，防止多次判断。
+- 提高实用性: 重构代码的可见层。Closes #283
+- 提高实用性: 完善Java Doc。Closes #284
+- 提高实用性: 提供Java Doc 站点: http://fd.dreamtobe.cn 。Closes #284
+
+## Version 0.3.5
+
+_2016-08-16_
+
+#### 性能与提高
+
+- 提高实用性: 为FileDownloader中的所有线程添加线程名。
+- 提高性能: 调整`block-completed-thread-pool`中的核心线程数: 5->2，减少资源的浪费。
+
+#### 修复
+
+- 修复(SQLiteFullException): 覆盖了在整个下载过程中可能遇到`SQLiteFullException`的错误，就捕获相关错误并回调回 `FileDownloadListener#error` 。 Closes #243
+- 修复(提供目录的情况): 修复若是提供的是文件夹，并且对应的任务已经下载完成，再次启动的时候，在直接回调`FileDownloadListener#completed`时，获取的`targetFilePath`可能为null的问题。 Closes #237
+
 ## Version 0.3.4
 
 _2016-07-31_
